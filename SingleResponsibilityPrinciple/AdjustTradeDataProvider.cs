@@ -9,26 +9,26 @@ namespace SingleResponsibilityPrinciple
 {
     public class AdjustTradeDataProvider : ITradeDataProvider
     {
-        private readonly ITradeDataProvider origProvider;
+        private ITradeDataProvider _origProvider;
 
         public AdjustTradeDataProvider(ITradeDataProvider origProvider)
         {
-            this.origProvider = origProvider;
+            _origProvider = origProvider;
         }
 
         public IEnumerable<string> GetTradeData()
         {
             // call orignal GetTradeData
-            IEnumerable<string> lines = origProvider.GetTradeData();
+            IEnumerable<string> lines = _origProvider.GetTradeData();
 
             List<string> result = new List<string>();
-            foreach (String line in lines)
+            foreach (string line in lines)
             {
-                String newLine = line.Replace("GBP", "EUR");
+                string newLine = line.Replace("GBP", "EUR");
                 result.Add(newLine);
             }
 
-            return lines;
+            return result;
         }
     }
 
