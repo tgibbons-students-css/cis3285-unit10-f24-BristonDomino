@@ -11,11 +11,16 @@ namespace SingleResponsibilityPrinciple
     {
         private readonly ITradeDataProvider _baseProvider;
 
-        public AsyncURLProvider(ITradeDataProvider baseProvider)
+        public URLAsyncProvider(ITradeDataProvider baseProvider)
         {
             _baseProvider = baseProvider;
         }
 
-        public IEnumerable<string> GetS
+        public IEnumerable<string> GetTradeData()
+        {
+            Task<IEnumerable<string>> task = Task.Run(() => _baseProvider.GetTradeData());
+            task.Wait();
+            return task.Result;
+        }
     }
 }

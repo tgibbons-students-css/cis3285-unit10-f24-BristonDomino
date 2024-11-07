@@ -39,7 +39,12 @@ namespace SingleResponsibilityPrinciple
             ITradeParser tradeParser = new SimpleTradeParser(tradeValidator, tradeMapper);
             ITradeStorage tradeStorage = new AdoNetTradeStorage(logger);
 
-            TradeProcessor tradeProcessor = new TradeProcessor(fileProvider, tradeParser, tradeStorage);
+            ITradeDataProvider urlProvider = new URLTradeDataProvider(tradeURL, logger);
+
+            ITradeDataProvider asyncProvider = new URLAsyncProvider(urlProvider);
+            TradeProcessor tradeProcessor = new TradeProcessor(asyncProvider, tradeParser, tradeStorage);
+
+            //TradeProcessor tradeProcessor = new TradeProcessor(fileProvider, tradeParser, tradeStorage);
             //TradeProcessor tradeProcessor = new TradeProcessor(urlProvider, tradeParser, tradeStorage);
 
             tradeProcessor.ProcessTrades();
