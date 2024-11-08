@@ -18,9 +18,25 @@ namespace SingleResponsibilityPrinciple
 
         public IEnumerable<string> GetTradeData()
         {
-            Task<IEnumerable<string>> task = Task.Run(() => _baseProvider.GetTradeData());
-            task.Wait();
-            return task.Result;
+            // Blocking call to GetTradeDataAsync, compatible with synchronous consumers
+            List<string> resultList = new List<string>();
+            var enumerator = GetTradeDataAsync().GetAsyncEnumerator();
+
+            while (enumerator.MoveNextAsync().Result)
+            {
+                resultList.Add(enumerator.Current);
+            }
+
+            return resultList;
+        }
+
+        public async IAsyncEnumerable<string> GetTradeDataAsync()
+        {
+            // If _baseProvider supports IAsyncEnumerable, yield each line asynchronously
+            await foreach (var trade in _baseProvider.GetTradeDataAsync())
+            {
+                yield return trade;
+            }
         }
     }
 }

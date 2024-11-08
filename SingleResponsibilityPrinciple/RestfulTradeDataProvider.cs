@@ -10,9 +10,9 @@ namespace SingleResponsibilityPrinciple
 {
     public class RestfulTradeDataProvider : ITradeDataProvider
     {
-        string url;
-        ILogger logger;
-        HttpClient client = new HttpClient();
+       private readonly string url;
+       private readonly ILogger logger;
+       private readonly HttpClient client = new HttpClient();
 
         public RestfulTradeDataProvider(string url, ILogger logger)
         {
@@ -20,28 +20,41 @@ namespace SingleResponsibilityPrinciple
             this.logger = logger;
         }
 
-        async Task<List<string>> GetTradeAsync()
+        public async IAsyncEnumerable<string> GetTradeDataAsync()
         {
             logger.LogInfo("Connecting to the Restful server using HTTP");
-            List<string> tradesString = null;
 
             HttpResponseMessage response = await client.GetAsync(url);
             if (response.IsSuccessStatusCode)
             {
-                // Read the content as a string and deserialize it into a List<string>
-                string content = await response.Content.ReadAsStringAsync();
-                tradesString = JsonSerializer.Deserialize<List<string>>(content);
-                logger.LogInfo("Received trade strings of length = " + tradesString.Count);
+                using Stream stream = await response.Content.ReadAsStreamAsync();
+                using StreamReader reader = new StreamReader(stream);
+
+                while (!reader.EndOfStream)
+                {
+                    string line = await reader.ReadLineAsync();
+                    yield return line;  // Yield each line as it’s read
+                }
             }
-            return tradesString;
+            else
+            {
+                logger.LogWarning($"Failed to retrieve data. Status code: {response.StatusCode}");
+                throw new Exception($"Error retrieving data from URL: {url}");
+            }
         }
 
         public IEnumerable<string> GetTradeData()
         {
-            Task<List<string>> task = Task.Run(() => GetTradeAsync());
-            task.Wait();
+            Task<IAsyncEnumerable<string>> task = Task.FromResult(GetTradeDataAsync());
+            List<string> tradeList = new List<string>();
 
-            List<string> tradeList = task.Result;
+            // Convert async enumerable to list for compatibility with synchronous method
+            var enumerator = task.Result.GetAsyncEnumerator();
+            while (enumerator.MoveNextAsync().Result)
+            {
+                tradeList.Add(enumerator.Current);
+            }
+
             return tradeList;
         }
     }

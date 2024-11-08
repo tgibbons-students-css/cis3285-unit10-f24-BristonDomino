@@ -9,7 +9,7 @@ namespace SingleResponsibilityPrinciple
 {
     public class AdjustTradeDataProvider : ITradeDataProvider
     {
-        private ITradeDataProvider _origProvider;
+        private readonly ITradeDataProvider _origProvider;
 
         public AdjustTradeDataProvider(ITradeDataProvider origProvider)
         {
@@ -29,6 +29,15 @@ namespace SingleResponsibilityPrinciple
             }
 
             return result;
+        }
+
+        // New async method to implement IAsyncEnumerable<string>
+        public async IAsyncEnumerable<string> GetTradeDataAsync()
+        {
+            await foreach (string line in _origProvider.GetTradeDataAsync())
+            {
+                yield return line.Replace("GBP", "EUR");
+            }
         }
     }
 
